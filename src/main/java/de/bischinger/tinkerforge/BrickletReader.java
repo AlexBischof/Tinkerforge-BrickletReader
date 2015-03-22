@@ -1,7 +1,5 @@
 package de.bischinger.tinkerforge;
 
-import com.tinkerforge.BrickletAmbientLight;
-import com.tinkerforge.BrickletTemperature;
 import com.tinkerforge.Device;
 import com.tinkerforge.IPConnection;
 import org.reflections.Reflections;
@@ -9,13 +7,22 @@ import org.reflections.Reflections;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /**
  * Created by Alexander Bischof on 27.01.15.
  */
 public class BrickletReader {
-  public static void main(String[] args) throws Exception {
+  private final BrickletUidMap brickletUidMap;
+
+  public BrickletReader() {
+	this.brickletUidMap = new BrickletUidMap();
+  }
+
+  public void init(IPConnection ipConnection) throws Exception {
+
+	Objects.requireNonNull(ipConnection);
 
 	//Find all Subclasses of Device
 	Reflections reflections = new Reflections("com.tinkerforge");
@@ -30,11 +37,7 @@ public class BrickletReader {
 	  } catch (IllegalAccessException | NoSuchFieldException e) {}  //Ignore
 	}
 
-	//Application bricklet class to uid map
-	final BrickletUidMap brickletUidMap = new BrickletUidMap();
-
 	//Lookup connected bricklets with an EnumerateListener
-	IPConnection ipConnection = new IPConnection();
 	ipConnection.connect("localhost", 4223);
 	ipConnection.addEnumerateListener(
 			(uid, connectedUid, position, hardwareVersion, firmwareVersion, deviceIdentifier, enumerationType) -> {
@@ -51,12 +54,11 @@ public class BrickletReader {
 
 	ipConnection.enumerate();
 
-	//Example: 2 temperature and one ambientlight bricklets
-	BrickletTemperature temperature1 = new BrickletTemperature(brickletUidMap.getBrickletUid(BrickletTemperature.class),
-	                                                    ipConnection);
-	BrickletTemperature temperature2 = new BrickletTemperature(brickletUidMap.getBrickletUid(BrickletTemperature.class),
-	                                                    ipConnection);
-	BrickletAmbientLight ambientLight = new BrickletAmbientLight(
-			brickletUidMap.getBrickletUid(BrickletAmbientLight.class), ipConnection);
+	//Wait to get result
+	Thread.sleep(1000l);
+  }
+
+  public String getBrickletUid(Class<? extends Device> aClass) {
+	return brickletUidMap.getBrickletUid(aClass);
   }
 }
